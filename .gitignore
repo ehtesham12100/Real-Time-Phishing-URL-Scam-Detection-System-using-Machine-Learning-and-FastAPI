@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment & Dependencies
+env/
+venv/
+ENV/
+.env
+
+# SQLite local database
+*.db
+*.sqlite3
+
+# OS generated files
+.DS_Store
+Thumbs.db

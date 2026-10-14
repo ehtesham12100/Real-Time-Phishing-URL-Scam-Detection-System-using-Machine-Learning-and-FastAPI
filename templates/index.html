@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phishing Detection Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-['Inter',sans-serif]">
+
+    <!-- Navbar -->
+    <header class="border-b border-slate-800 bg-slate-900/90 sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow">
+                    <i class="fa-solid fa-shield text-lg"></i>
+                </div>
+                <div>
+                    <span class="font-bold text-base text-white tracking-tight">Phishing Detector</span>
+                    <span class="text-xs text-slate-400 block -mt-0.5">URL & Message Security Scanner</span>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-3 text-xs text-slate-400">
+                <span class="flex items-center bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-md">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 mr-2"></span>
+                    Server Online
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-8">
+
+        <!-- Quick Stats Bar -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4">
+                <div class="text-xs text-slate-400 font-medium">Total Scanned</div>
+                <div id="stat-total-scans" class="text-2xl font-bold text-white mt-1">0</div>
+            </div>
+            <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4">
+                <div class="text-xs text-slate-400 font-medium">Safe Websites</div>
+                <div id="stat-safe-count" class="text-2xl font-bold text-emerald-400 mt-1">0</div>
+            </div>
+            <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4">
+                <div class="text-xs text-slate-400 font-medium">Suspicious / Phishing</div>
+                <div id="stat-threats-count" class="text-2xl font-bold text-rose-400 mt-1">0</div>
+            </div>
+            <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4">
+                <div class="text-xs text-slate-400 font-medium">Threat Percentage</div>
+                <div id="stat-threat-rate" class="text-2xl font-bold text-amber-400 mt-1">0.0%</div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="flex border-b border-slate-800 mb-6 space-x-1 sm:space-x-2">
+            <button onclick="switchTab('url-tab')" id="btn-url-tab" class="tab-btn active-tab px-4 py-2.5 rounded-t-lg text-sm font-medium flex items-center space-x-2 border-b-2 border-blue-500 text-blue-400">
+                <i class="fa-solid fa-link text-xs"></i>
+                <span>Scan URL</span>
+            </button>
+            <button onclick="switchTab('text-tab')" id="btn-text-tab" class="tab-btn px-4 py-2.5 rounded-t-lg text-sm font-medium text-slate-400 hover:text-slate-200 flex items-center space-x-2">
+                <i class="fa-solid fa-envelope text-xs"></i>
+                <span>Scan Email / SMS</span>
+            </button>
+            <button onclick="switchTab('batch-tab')" id="btn-batch-tab" class="tab-btn px-4 py-2.5 rounded-t-lg text-sm font-medium text-slate-400 hover:text-slate-200 flex items-center space-x-2">
+                <i class="fa-solid fa-list text-xs"></i>
+                <span>Multiple URLs</span>
+            </button>
+            <button onclick="switchTab('history-tab')" id="btn-history-tab" class="tab-btn px-4 py-2.5 rounded-t-lg text-sm font-medium text-slate-400 hover:text-slate-200 flex items-center space-x-2">
+                <i class="fa-solid fa-clock-rotate-left text-xs"></i>
+                <span>Recent History</span>
+            </button>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- TAB 1: URL SCANNER -->
+        <!-- ============================================================= -->
+        <div id="url-tab" class="tab-content block space-y-6">
+            
+            <div class="bg-slate-800/40 border border-slate-700/70 rounded-2xl p-6 sm:p-7">
+                <h1 class="text-xl font-bold text-white mb-1">Check a Website Link</h1>
+                <p class="text-sm text-slate-400 mb-5">
+                    Paste any website link below to check if it's safe or trying to scam you.
+                </p>
+
+                <form id="url-scan-form" onsubmit="handleUrlScan(event)" class="space-y-4">
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <div class="relative flex-1">
+                            <input 
+                                type="text" 
+                                id="target-url" 
+                                placeholder="Paste link here (e.g. https://example.com/login)" 
+                                required 
+                                class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 text-sm"
+                            >
+                        </div>
+                        <button 
+                            type="submit" 
+                            id="scan-submit-btn" 
+                            class="bg-blue-600 hover:bg-blue-500 text-white font-medium px-6 py-3 rounded-xl text-sm transition flex items-center justify-center space-x-2 shadow"
+                        >
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <span>Check Link</span>
+                        </button>
+                    </div>
+
+                    <div class="flex flex-wrap items-center justify-between gap-3 text-xs pt-1 text-slate-400">
+                        <label class="flex items-center space-x-2 cursor-pointer select-none">
+                            <input type="checkbox" id="check-live-threat" checked class="rounded bg-slate-800 border-slate-700 text-blue-600">
+                            <span>Check Google Safe Browsing database</span>
+                        </label>
+
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            <span class="text-slate-500">Try an example:</span>
+                            <button type="button" onclick="fillUrl('https://www.google.com')" class="example-btn">google.com (Safe)</button>
+                            <button type="button" onclick="fillUrl('http://paypa1-security.com/login')" class="example-btn text-rose-300">Fake PayPal</button>
+                            <button type="button" onclick="fillUrl('http://192.168.1.100/@login.chase.com')" class="example-btn text-amber-300">IP & @ Masking</button>
+                            <button type="button" onclick="fillUrl('http://random-scam-link-9482.xyz/verify')" class="example-btn text-rose-300">Suspicious .xyz</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Loading Spinner -->
+            <div id="url-loading" class="hidden text-center py-10 bg-slate-800/30 rounded-xl border border-slate-700">
+                <i class="fa-solid fa-spinner animate-spin text-blue-400 text-3xl mb-3"></i>
+                <div class="text-sm font-medium text-white">Analyzing URL features...</div>
+                <div class="text-xs text-slate-400 mt-0.5">Checking domain name, character patterns, and security lists.</div>
+            </div>
+
+            <!-- Results Card -->
+            <div id="url-results" class="hidden space-y-6">
+                
+                <!-- Main Verdict Banner -->
+                <div id="verdict-banner" class="border rounded-xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div class="space-y-1.5">
+                        <div class="flex items-center space-x-2">
+                            <span id="verdict-badge" class="px-3 py-1 rounded-md text-xs font-bold uppercase">
+                                VERDICT
+                            </span>
+                        </div>
+                        <h2 id="verdict-title" class="text-2xl font-bold text-white">MALICIOUS LINK</h2>
+                        <p id="verdict-recommendation" class="text-sm text-slate-300">
+                            Recommendation text here.
+                        </p>
+                    </div>
+
+                    <div class="text-right sm:border-l sm:border-slate-700/60 sm:pl-6">
+                        <div class="text-xs uppercase text-slate-400 font-medium">Risk Score</div>
+                        <div class="text-3xl font-extrabold" id="risk-score-value">85%</div>
+                        <div id="prob-subtext" class="text-xs text-slate-400 mt-0.5">Moderate to high threat</div>
+                    </div>
+                </div>
+
+                <!-- 4 Simple Check Cards -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div class="bg-slate-800/50 border border-slate-700/70 rounded-xl p-3.5">
+                        <div class="text-xs text-slate-400">Brand Impersonation</div>
+                        <div id="stat-brand" class="text-sm font-semibold text-white mt-1">None</div>
+                    </div>
+
+                    <div class="bg-slate-800/50 border border-slate-700/70 rounded-xl p-3.5">
+                        <div class="text-xs text-slate-400">Google Safe Browsing</div>
+                        <div id="stat-google" class="text-sm font-semibold text-white mt-1">Clean</div>
+                    </div>
+
+                    <div class="bg-slate-800/50 border border-slate-700/70 rounded-xl p-3.5">
+                        <div class="text-xs text-slate-400">Domain Entropy</div>
+                        <div id="stat-entropy" class="text-sm font-semibold text-white mt-1">Normal</div>
+                    </div>
+
+                    <div class="bg-slate-800/50 border border-slate-700/70 rounded-xl p-3.5">
+                        <div class="text-xs text-slate-400">DNS Status</div>
+                        <div id="stat-dns" class="text-sm font-semibold text-white mt-1">Active</div>
+                    </div>
+                </div>
+
+                <!-- Why was this flagged? (Human friendly explanation) -->
+                <div class="bg-slate-800/50 border border-slate-700/70 rounded-xl p-5">
+                    <h3 class="text-sm font-semibold text-white mb-3 flex items-center space-x-2">
+                        <i class="fa-solid fa-circle-info text-blue-400"></i>
+                        <span>Why was this score given?</span>
+                    </h3>
+                    <div id="contributions-list" class="space-y-2.5">
+                    </div>
+                </div>
+
+                <!-- Extracted Details Table -->
+                <div class="bg-slate-800/50 border border-slate-700/70 rounded-xl p-5">
+                    <h3 class="text-sm font-semibold text-white mb-3 flex items-center space-x-2">
+                        <i class="fa-solid fa-list-check text-slate-400"></i>
+                        <span>URL Breakdown & Characteristics</span>
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead>
+                                <tr class="border-b border-slate-700 text-slate-400">
+                                    <th class="py-2 px-3">Check</th>
+                                    <th class="py-2 px-3">Value</th>
+                                    <th class="py-2 px-3">What it means</th>
+                                </tr>
+                            </thead>
+                            <tbody id="raw-features-table" class="divide-y divide-slate-800 text-slate-300">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- TAB 2: EMAIL & SMS PHISHING -->
+        <!-- ============================================================= -->
+        <div id="text-tab" class="tab-content hidden space-y-6">
+            <div class="bg-slate-800/40 border border-slate-700/70 rounded-2xl p-6 sm:p-7">
+                <h2 class="text-xl font-bold text-white mb-1">Check Suspicious Message or Email</h2>
+                <p class="text-sm text-slate-400 mb-5">
+                    Paste the text of an email or SMS you received to check for fake urgency or scam patterns.
+                </p>
+
+                <form id="text-scan-form" onsubmit="handleTextScan(event)" class="space-y-4">
+                    <textarea 
+                        id="phish-text" 
+                        rows="5" 
+                        placeholder="Paste email or SMS text here..." 
+                        required
+                        class="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 text-sm"
+                    ></textarea>
+
+                    <div class="flex flex-wrap items-center justify-between gap-3 text-xs">
+                        <div class="flex flex-wrap items-center gap-1.5 text-slate-400">
+                            <span class="text-slate-500">Examples:</span>
+                            <button type="button" onclick="fillTextSample('bank')" class="example-btn text-rose-300">Bank Alert Scam</button>
+                            <button type="button" onclick="fillTextSample('lottery')" class="example-btn text-amber-300">Prize Winner Scam</button>
+                            <button type="button" onclick="fillTextSample('normal')" class="example-btn text-emerald-300">Normal Meeting Email</button>
+                        </div>
+
+                        <button 
+                            type="submit" 
+                            class="bg-blue-600 hover:bg-blue-500 text-white font-medium px-5 py-2.5 rounded-xl text-sm transition shadow"
+                        >
+                            Analyze Message
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Text Results Card -->
+            <div id="text-results" class="hidden space-y-4">
+                <div id="text-verdict-banner" class="border rounded-xl p-5 flex items-center justify-between">
+                    <div>
+                        <span id="text-verdict-badge" class="px-2.5 py-0.5 rounded text-xs font-bold uppercase">VERDICT</span>
+                        <h3 id="text-verdict-title" class="text-xl font-bold text-white mt-1">High Risk</h3>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xs uppercase text-slate-400 font-medium">Scam Probability</div>
+                        <div class="text-2xl font-bold text-white" id="text-risk-score">75%</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-slate-800/50 border border-slate-700/70 rounded-xl p-4">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-amber-400 mb-2">Urgent or Pressure Phrases Found</h4>
+                        <ul id="urgency-phrases-list" class="space-y-1.5 text-xs text-slate-300">
+                        </ul>
+                    </div>
+
+                    <div class="bg-slate-800/50 border border-slate-700/70 rounded-xl p-4">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-blue-400 mb-2">Web Links Found in Message</h4>
+                        <ul id="extracted-urls-list" class="space-y-1.5 text-xs font-mono text-slate-300">
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- TAB 3: BATCH SCANNER -->
+        <!-- ============================================================= -->
+        <div id="batch-tab" class="tab-content hidden space-y-6">
+            <div class="bg-slate-800/40 border border-slate-700/70 rounded-2xl p-6 sm:p-7">
+                <h2 class="text-xl font-bold text-white mb-1">Check Multiple URLs at Once</h2>
+                <p class="text-sm text-slate-400 mb-5">
+                    Paste several links below (one per line) to scan all of them together.
+                </p>
+
+                <form id="batch-scan-form" onsubmit="handleBatchScan(event)" class="space-y-4">
+                    <textarea 
+                        id="batch-urls" 
+                        rows="5" 
+                        placeholder="https://google.com&#10;http://paypa1-security.com&#10;https://example.com" 
+                        required
+                        class="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 text-sm font-mono"
+                    ></textarea>
+
+                    <div class="flex items-center justify-between">
+                        <button type="button" onclick="fillBatchSample()" class="example-btn">Load Sample Links</button>
+                        <button 
+                            type="submit" 
+                            class="bg-blue-600 hover:bg-blue-500 text-white font-medium px-5 py-2.5 rounded-xl text-sm transition shadow"
+                        >
+                            Scan All Links
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="batch-results" class="hidden bg-slate-800/50 border border-slate-700/70 rounded-xl p-5">
+                <h3 class="text-sm font-semibold text-white mb-3">Batch Results</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead>
+                            <tr class="border-b border-slate-700 text-slate-400">
+                                <th class="py-2 px-3">URL</th>
+                                <th class="py-2 px-3">Risk Score</th>
+                                <th class="py-2 px-3">Status</th>
+                                <th class="py-2 px-3 text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="batch-table-body" class="divide-y divide-slate-800 text-slate-300">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- TAB 4: RECENT HISTORY -->
+        <!-- ============================================================= -->
+        <div id="history-tab" class="tab-content hidden space-y-6">
+            <div class="bg-slate-800/40 border border-slate-700/70 rounded-2xl p-6 sm:p-7">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-5">
+                    <div>
+                        <h2 class="text-xl font-bold text-white">Past Scans History</h2>
+                        <p class="text-xs text-slate-400 mt-0.5">All scans are saved locally in the SQLite database.</p>
+                    </div>
+
+                    <div class="flex items-center space-x-2">
+                        <button onclick="exportCsv()" class="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 transition flex items-center space-x-1.5">
+                            <i class="fa-solid fa-download text-xs text-slate-400"></i>
+                            <span>Export CSV</span>
+                        </button>
+                        <button onclick="clearHistory()" class="px-3.5 py-2 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 text-xs font-medium border border-rose-800/40 transition flex items-center space-x-1.5">
+                            <i class="fa-solid fa-trash-can text-xs"></i>
+                            <span>Clear</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead>
+                            <tr class="border-b border-slate-700 text-slate-400 bg-slate-900/50">
+                                <th class="py-2.5 px-3">ID</th>
+                                <th class="py-2.5 px-3">Time</th>
+                                <th class="py-2.5 px-3">URL</th>
+                                <th class="py-2.5 px-3">Risk</th>
+                                <th class="py-2.5 px-3">Status</th>
+                                <th class="py-2.5 px-3 text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table-body" class="divide-y divide-slate-800 text-slate-300">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 py-6 text-center text-xs text-slate-500">
+        <p>Phishing Detection Tool — Built with Python, FastAPI, and SQLite</p>
+    </footer>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
