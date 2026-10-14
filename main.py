@@ -36,29 +36,7 @@ app = FastAPI(
 # Ensure DB initialized
 init_db()
 
-from pathlib import Path
-
-# Directories (robust for local & Vercel serverless)
-BASE_DIR = Path(__file__).resolve().parent
-TEMPLATES_DIR = BASE_DIR / "templates"
-STATIC_DIR = BASE_DIR / "static"
-
-if not TEMPLATES_DIR.exists():
-    alt_templates = BASE_DIR.parent / "templates"
-    if alt_templates.exists():
-        TEMPLATES_DIR = alt_templates
-        STATIC_DIR = BASE_DIR.parent / "static"
-
-try:
-    STATIC_DIR.mkdir(parents=True, exist_ok=True)
-    TEMPLATES_DIR.mkdir(parents=True, exist_ok=True)
-except OSError:
-    pass
-
-if STATIC_DIR.exists():
-    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
-
-templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+from html_content import DASHBOARD_HTML
 
 # Request Models
 class URLScanRequest(BaseModel):
@@ -85,9 +63,17 @@ async def vercel_path_normalizer(request: Request, call_next):
 @app.get("/api", response_class=HTMLResponse)
 @app.get("/api/index", response_class=HTMLResponse)
 @app.get("/api/index.py", response_class=HTMLResponse)
-async def serve_dashboard(request: Request):
-    """Serves the main Cyber Threat SOC Dashboard."""
-    return templates.TemplateResponse("index.html", {"request": request})
+async def serve_dashboard():
+    """Serves the main Phishing Detection Dashboard."""
+    return HTMLResponse(content=DASHBOARD_HTML, status_code=200)
+
+@app.get("/static/style.css")
+async def serve_static_css():
+    return Response(content="/* inlined in index.html */", media_type="text/css")
+
+@app.get("/static/app.js")
+async def serve_static_js():
+    return Response(content="/* inlined in index.html */", media_type="application/javascript")
 
 @app.post("/api/scan")
 async def scan_single_url(req: URLScanRequest):
