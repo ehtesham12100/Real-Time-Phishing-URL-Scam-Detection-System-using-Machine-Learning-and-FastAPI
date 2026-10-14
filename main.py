@@ -71,9 +71,20 @@ class TextScanRequest(BaseModel):
 class BatchScanRequest(BaseModel):
     urls: List[str]
 
+# Middleware to handle Vercel serverless path rewrites
+@app.middleware("http")
+async def vercel_path_normalizer(request: Request, call_next):
+    path = request.scope.get("path", "")
+    if path in ("/api/index.py", "/api/index", "/api/index/", "/api", "/api/"):
+        request.scope["path"] = "/"
+    return await call_next(request)
+
 # ----------------- ROUTES -----------------
 
 @app.get("/", response_class=HTMLResponse)
+@app.get("/api", response_class=HTMLResponse)
+@app.get("/api/index", response_class=HTMLResponse)
+@app.get("/api/index.py", response_class=HTMLResponse)
 async def serve_dashboard(request: Request):
     """Serves the main Cyber Threat SOC Dashboard."""
     return templates.TemplateResponse("index.html", {"request": request})
