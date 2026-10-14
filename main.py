@@ -36,16 +36,29 @@ app = FastAPI(
 # Ensure DB initialized
 init_db()
 
-# Directories
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
-STATIC_DIR = os.path.join(BASE_DIR, "static")
+from pathlib import Path
 
-os.makedirs(STATIC_DIR, exist_ok=True)
-os.makedirs(TEMPLATES_DIR, exist_ok=True)
-app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+# Directories (robust for local & Vercel serverless)
+BASE_DIR = Path(__file__).resolve().parent
+TEMPLATES_DIR = BASE_DIR / "templates"
+STATIC_DIR = BASE_DIR / "static"
 
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
+if not TEMPLATES_DIR.exists():
+    alt_templates = BASE_DIR.parent / "templates"
+    if alt_templates.exists():
+        TEMPLATES_DIR = alt_templates
+        STATIC_DIR = BASE_DIR.parent / "static"
+
+try:
+    STATIC_DIR.mkdir(parents=True, exist_ok=True)
+    TEMPLATES_DIR.mkdir(parents=True, exist_ok=True)
+except OSError:
+    pass
+
+if STATIC_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 # Request Models
 class URLScanRequest(BaseModel):
